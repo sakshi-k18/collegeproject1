@@ -88,3 +88,33 @@ function removeItem(index) {
 }
 
 renderItems();
+
+// === QR BUTTON LOGIC (FINAL FIX) ===
+document.addEventListener("DOMContentLoaded", function () {
+
+  const qrBtn = document.getElementById("qrBtn");
+  const qrModal = document.getElementById("qrModal");
+  const qrClose = document.getElementById("qrClose");
+
+  // Safety check
+  if (!qrBtn || !qrModal || !qrClose) {
+    console.error("QR elements not found");
+    return;
+  }
+
+  qrBtn.onclick = function () {
+    qrModal.classList.remove("hidden");
+  };
+
+  qrClose.onclick = function () {
+    qrModal.classList.add("hidden");
+  };
+
+  qrModal.onclick = function (e) {
+    if (e.target === qrModal) {
+      qrModal.classList.add("hidden");
+    }
+  };
+
+});
+

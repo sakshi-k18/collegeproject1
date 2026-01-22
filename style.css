@@ -89,3 +89,65 @@ section {
   background: #444;
   margin-top: 8px;
 }
+
+/* REQUIRED: hidden class */
+.hidden {
+  display: none !important;
+}
+
+/* Floating QR button */
+#qrBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  background: #007bff;
+  color: white;
+  font-size: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+}
+
+/* QR modal background */
+#qrModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+/* QR popup box */
+#qrBox {
+  background: white;
+  padding: 20px;
+  width: 280px;
+  text-align: center;
+  border-radius: 12px;
+  position: relative;
+}
+
+#qrBox img {
+  width: 200px;
+  height: 200px;
+  margin: 10px 0;
+}
+
+/* Close button */
+#qrClose {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
