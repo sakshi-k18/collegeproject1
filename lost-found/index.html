@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lost and Found</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Lost and Found</h1>
+</header>
+
+<div class="actions">
+  <button id="lostBtn" class="lost">Report Lost</button>
+  <button id="foundBtn" class="found">Report Found</button>
+</div>
+
+<form id="reportForm" class="hidden">
+  <h2 id="formTitle"></h2>
+
+  <input type="text" id="itemName" placeholder="Item name" required>
+  <input type="text" id="itemLocation" placeholder="Location" required>
+  <textarea id="itemDesc" placeholder="Description" required></textarea>
+  <input type="text" id="itemContact" placeholder="Contact info" required>
+  <input type="file" id="itemImage" accept="image/*" required>
+
+  <button type="submit">Submit</button>
+</form>
+
+<div class="sections">
+  <section>
+    <h2 class="lost-title">Lost Items</h2>
+    <div id="lostList"></div>
+  </section>
+
+  <section>
+    <h2 class="found-title">Found Items</h2>
+    <div id="foundList"></div>
+  </section>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
