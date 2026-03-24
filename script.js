@@ -2,101 +2,200 @@ const lostBtn = document.getElementById("lostBtn");
 const foundBtn = document.getElementById("foundBtn");
 const form = document.getElementById("reportForm");
 const formTitle = document.getElementById("formTitle");
+const itemNameInput = document.getElementById("itemName");
+const itemLocationInput = document.getElementById("itemLocation");
+const itemDescInput = document.getElementById("itemDesc");
+const itemContactInput = document.getElementById("itemContact");
+const itemImageInput = document.getElementById("itemImage");
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
+const feedbackMessage = document.getElementById("feedbackMessage");
 
 const lostList = document.getElementById("lostList");
 const foundList = document.getElementById("foundList");
 
 let currentType = "lost";
+let searchTerm = "";
+let feedbackTimeoutId;
 
 lostBtn.onclick = () => openForm("lost");
 foundBtn.onclick = () => openForm("found");
+searchInput.oninput = (event) => {
+  searchTerm = event.target.value.trim();
+  loadItems(searchTerm);
+};
+clearSearchBtn.onclick = () => {
+  searchInput.value = "";
+  searchTerm = "";
+  loadItems();
+};
 
 function openForm(type) {
   currentType = type;
   formTitle.textContent =
     type === "lost" ? "Report Lost Item" : "Report Found Item";
   form.classList.remove("hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-form.onsubmit = function (e) {
+function showFeedback(message, type = "success") {
+  feedbackMessage.textContent = message;
+  feedbackMessage.className = `feedback-message ${type}`;
+
+  window.clearTimeout(feedbackTimeoutId);
+  feedbackTimeoutId = window.setTimeout(() => {
+    feedbackMessage.className = "feedback-message hidden";
+    feedbackMessage.textContent = "";
+  }, 3500);
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Something went wrong.");
+  }
+
+  return data;
+}
+
+form.onsubmit = async function (e) {
   e.preventDefault();
 
+  const file = itemImageInput.files[0];
+  if (!file) {
+    alert("Please choose an image before submitting.");
+    return;
+  }
+
   const reader = new FileReader();
-  const file = itemImage.files[0];
 
-  reader.onload = () => {
-
-    const now = new Date();
-
-    const item = {
+  reader.onload = async () => {
+    const payload = {
       type: currentType,
-      name: itemName.value,
-      location: itemLocation.value,
-      desc: itemDesc.value,
-      contact: itemContact.value,
+      name: itemNameInput.value,
+      location: itemLocationInput.value,
+      desc: itemDescInput.value,
+      contact: itemContactInput.value,
       image: reader.result,
-      time: now.toLocaleString()
+      time: new Date().toLocaleString()
     };
 
-    const items = JSON.parse(localStorage.getItem("items")) || [];
-    items.push(item);
-    localStorage.setItem("items", JSON.stringify(items));
+    try {
+      await fetchJson("/api/items", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-    form.reset();
-    form.classList.add("hidden");
-    renderItems();
+      form.reset();
+      form.classList.add("hidden");
+      showFeedback("Report saved to the database.");
+      loadItems(searchTerm);
+    } catch (error) {
+      showFeedback(error.message, "error");
+    }
   };
 
   reader.readAsDataURL(file);
 };
 
-function renderItems() {
+function buildEmptyState(message) {
+  const emptyState = document.createElement("div");
+  emptyState.className = "empty-state";
+  emptyState.textContent = message;
+  return emptyState;
+}
+
+function buildItemCard(item) {
+  const div = document.createElement("div");
+  div.className = "card";
+
+  div.innerHTML = `
+    <img src="${item.image}" alt="${item.name}">
+    <div class="card-content">
+      <div class="card-topline">
+        <span class="item-badge ${item.type}">${item.type}</span>
+        <p class="card-meta">Reported on: ${item.time}</p>
+      </div>
+      <h3>${item.name}</h3>
+      <p>${item.desc}</p>
+      <p><strong>Location:</strong> ${item.location}</p>
+      <p><strong>Contact:</strong> ${item.contact}</p>
+      <button type="button" data-id="${item.id}">Mark as Resolved</button>
+    </div>
+  `;
+
+  div.querySelector("button").onclick = async () => {
+    try {
+      await fetchJson(`/api/items/${item.id}`, { method: "DELETE" });
+      showFeedback("Item removed from the database.");
+      loadItems(searchTerm);
+    } catch (error) {
+      showFeedback(error.message, "error");
+    }
+  };
+
+  return div;
+}
+
+function renderItems(items) {
   lostList.innerHTML = "";
   foundList.innerHTML = "";
 
-  const items = JSON.parse(localStorage.getItem("items")) || [];
+  const lostItems = items.filter((item) => item.type === "lost");
+  const foundItems = items.filter((item) => item.type === "found");
 
-  items.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "card";
+  if (lostItems.length === 0) {
+    lostList.appendChild(
+      buildEmptyState(
+        searchTerm
+          ? "No lost items match your search right now."
+          : "No lost item reports yet. Use the form above to create one."
+      )
+    );
+  } else {
+    lostItems.forEach((item) => lostList.appendChild(buildItemCard(item)));
+  }
 
-    div.innerHTML = `
-      <img src="${item.image}">
-      <h4>${item.name}</h4>
-      <p>${item.desc}</p>
-      <p><b>Location:</b> ${item.location}</p>
-      <p><b>Contact:</b> ${item.contact}</p>
-      <p style="font-size: 12px; color: gray;">
-        Reported on: ${item.time}
-      </p>
-      <button onclick="removeItem(${index})">Mark as Resolved</button>
-    `;
+  if (foundItems.length === 0) {
+    foundList.appendChild(
+      buildEmptyState(
+        searchTerm
+          ? "No found items match your search right now."
+          : "No found item reports yet. Share one when you recover an item."
+      )
+    );
+  } else {
+    foundItems.forEach((item) => foundList.appendChild(buildItemCard(item)));
+  }
+}
 
-    if (item.type === "lost") {
-      lostList.appendChild(div);
-    } else {
-      foundList.appendChild(div);
+async function loadItems(search = "") {
+  try {
+    const params = new URLSearchParams();
+    if (search) {
+      params.set("search", search);
     }
-  });
+
+    const query = params.toString();
+    const data = await fetchJson(`/api/items${query ? `?${query}` : ""}`);
+    renderItems(data.items);
+  } catch (error) {
+    showFeedback(error.message, "error");
+  }
 }
 
-function removeItem(index) {
-  const items = JSON.parse(localStorage.getItem("items")) || [];
-  items.splice(index, 1);
-  localStorage.setItem("items", JSON.stringify(items));
-  renderItems();
-}
+loadItems();
 
-renderItems();
-
-// === QR BUTTON LOGIC (FINAL FIX) ===
 document.addEventListener("DOMContentLoaded", function () {
-
   const qrBtn = document.getElementById("qrBtn");
   const qrModal = document.getElementById("qrModal");
   const qrClose = document.getElementById("qrClose");
 
-  // Safety check
   if (!qrBtn || !qrModal || !qrClose) {
     console.error("QR elements not found");
     return;
@@ -115,6 +214,4 @@ document.addEventListener("DOMContentLoaded", function () {
       qrModal.classList.add("hidden");
     }
   };
-
 });
-

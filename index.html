@@ -2,60 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lost and Found</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="page-shell">
+    <header class="site-header">
+      <img src="./left.png" alt="Left Logo" class="logo left-logo">
 
-<header class="site-header">
-  <img src="./left.png" alt="Left Logo" class="logo left-logo">
+      <div class="hero-copy">
+        <p class="eyebrow">Campus support hub</p>
+        <h1>Lost &amp; Found</h1>
+        <p class="hero-text">
+          Quickly report missing belongings, search current records, and help reunite owners with what matters.
+        </p>
+      </div>
 
-  <h1>Lost and Found</h1>
+      <img src="./right.png" alt="Right Logo" class="logo right-logo">
+    </header>
 
-  <img src="./right.png" alt="Right Logo" class="logo right-logo">
-</header>
+    <main class="content">
+      <section class="toolbar-panel">
+        <div>
+          <h2>Make a report</h2>
+          <p>Choose the report type, add a clear description, upload an image, and save it to the shared database.</p>
+        </div>
 
-<div class="actions">
-  <button id="lostBtn" class="lost">Report Lost</button>
-  <button id="foundBtn" class="found">Report Found</button>
-</div>
+        <div class="actions">
+          <button id="lostBtn" class="lost">Report Lost</button>
+          <button id="foundBtn" class="found">Report Found</button>
+        </div>
+      </section>
 
-<form id="reportForm" class="hidden">
-  <h2 id="formTitle"></h2>
+      <section class="search-panel">
+        <div>
+          <h2>Search reports</h2>
+          <p>Search by item name, description, location, contact info, or report type.</p>
+        </div>
 
-  <input type="text" id="itemName" placeholder="Item name" required>
-  <input type="text" id="itemLocation" placeholder="Location" required>
-  <textarea id="itemDesc" placeholder="Description" required></textarea>
-  <input type="text" id="itemContact" placeholder="Contact info" required>
-  <input type="file" id="itemImage" accept="image/*" required>
+        <div class="search-controls">
+          <label class="search-input-wrap" for="searchInput">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="searchInput" placeholder="Search lost and found items...">
+          </label>
+          <button id="clearSearchBtn" class="secondary-btn" type="button">Clear</button>
+        </div>
+      </section>
 
-  <button type="submit">Submit</button>
-</form>
+      <form id="reportForm" class="report-form hidden">
+        <div class="form-heading">
+          <h2 id="formTitle"></h2>
+          <p>Include as much detail as possible so other students can identify the item.</p>
+        </div>
 
-<div class="sections">
-  <section>
-    <h2 class="lost-title">Lost Items</h2>
-    <div id="lostList"></div>
-  </section>
+        <div class="form-grid">
+          <label>
+            <span>Item name</span>
+            <input type="text" id="itemName" placeholder="Laptop sleeve, ID card, keys..." required>
+          </label>
 
-  <section>
-    <h2 class="found-title">Found Items</h2>
-    <div id="foundList"></div>
-  </section>
-</div>
+          <label>
+            <span>Location</span>
+            <input type="text" id="itemLocation" placeholder="Library, Cafeteria, Parking lot..." required>
+          </label>
 
-<script src="script.js"></script>
+          <label class="full-width">
+            <span>Description</span>
+            <textarea id="itemDesc" placeholder="Color, brand, identifying marks, time last seen..." required></textarea>
+          </label>
 
-<div id="qrBtn">📱</div>
+          <label>
+            <span>Contact info</span>
+            <input type="text" id="itemContact" placeholder="Email or phone number" required>
+          </label>
 
-<div id="qrModal" class="hidden">
-  <div id="qrBox">
-    <span id="qrClose">✖</span>
-    <h3>Scan to Open Website</h3>
-    <img src="./qr.png">
-    <p>Scan this QR to open the Lost & Found website</p>
+          <label>
+            <span>Upload image</span>
+            <input type="file" id="itemImage" accept="image/*" required>
+          </label>
+        </div>
+
+        <button type="submit" class="submit-btn">Submit Report</button>
+      </form>
+
+      <p id="feedbackMessage" class="feedback-message hidden" aria-live="polite"></p>
+
+      <div class="sections">
+        <section class="list-panel lost-panel">
+          <div class="section-heading">
+            <h2 class="lost-title">Lost Items</h2>
+            <p>Recently reported missing items that still need a match.</p>
+          </div>
+          <div id="lostList" class="item-list"></div>
+        </section>
+
+        <section class="list-panel found-panel">
+          <div class="section-heading">
+            <h2 class="found-title">Found Items</h2>
+            <p>Items that have been recovered and may belong to someone on campus.</p>
+          </div>
+          <div id="foundList" class="item-list"></div>
+        </section>
+      </div>
+    </main>
   </div>
-</div>
 
+  <div id="qrBtn" aria-label="Open QR code">📱</div>
+
+  <div id="qrModal" class="hidden">
+    <div id="qrBox">
+      <span id="qrClose">✖</span>
+      <h3>Scan to Open Website</h3>
+      <img src="./qr.png" alt="QR code for the Lost and Found website">
+      <p>Scan this QR code to open the Lost &amp; Found website on your phone.</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
