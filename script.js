@@ -51,7 +51,32 @@ function showFeedback(message, type = "success") {
 
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, options);
-  const data = await response.json();
+  const responseText = await response.text();
+  const contentType = response.headers.get("content-type") || "";
+  let data = {};
+  let isJson = false;
+
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+      isJson = true;
+    } catch {
+      isJson = false;
+    }
+  }
+
+   if (!response.ok && !isJson) {
+    const compactBody = responseText.trim().replace(/\s+/g, " ").slice(0, 120);
+    const nonJsonHint = compactBody
+      ? `Server returned non-JSON (${response.status}) - ${compactBody}`
+      : `Server returned non-JSON (${response.status}).`;
+    throw new Error(nonJsonHint);
+  }
+
+  if (response.ok && responseText && !isJson) {
+    const typeHint = contentType ? ` Content-Type: ${contentType}.` : "";
+    throw new Error(`Unexpected API response format.${typeHint}`);
+  }
 
   if (!response.ok) {
     throw new Error(data.error || "Something went wrong.");
@@ -111,6 +136,9 @@ function buildEmptyState(message) {
 }
 
 function buildItemCard(item) {
+  const status = item.status || item.type;
+  const shortDesc = item.desc.length > 120 ? `${item.desc.slice(0, 117)}...` : item.desc;
+  const isResolved = status === "resolved";
   const div = document.createElement("div");
   div.className = "card";
 
@@ -118,21 +146,27 @@ function buildItemCard(item) {
     <img src="${item.image}" alt="${item.name}">
     <div class="card-content">
       <div class="card-topline">
-        <span class="item-badge ${item.type}">${item.type}</span>
-        <p class="card-meta">Reported on: ${item.time}</p>
+        <p class="card-meta">Posted: ${item.time}</p>
+        <span class="item-badge ${status}">${status}</span>
       </div>
       <h3>${item.name}</h3>
-      <p>${item.desc}</p>
-      <p><strong>Location:</strong> ${item.location}</p>
-      <p><strong>Contact:</strong> ${item.contact}</p>
+      <p>${shortDesc}</p>
+      <p class="card-contact"><strong>Contact:</strong> ${item.contact}</p>
+      <button type="button" data-id="${item.id}" ${isResolved ? "disabled" : ""}>
+        ${isResolved ? "Claimed" : "Claim Item"}
+      </button>
       <button type="button" data-id="${item.id}">Mark as Resolved</button>
     </div>
   `;
 
   div.querySelector("button").onclick = async () => {
+    if (isResolved) {
+      return;
+    }
+
     try {
-      await fetchJson(`/api/items/${item.id}`, { method: "DELETE" });
-      showFeedback("Item removed from the database.");
+      await fetchJson(`/api/items/${item.id}/claim`, { method: "PATCH" });
+      showFeedback("Item marked as claimed.");
       loadItems(searchTerm);
     } catch (error) {
       showFeedback(error.message, "error");

@@ -73,6 +73,18 @@ function validateItem(payload) {
   return null;
 }
 
+function normalizeItemStatus(item) {
+  if (item.status === "resolved") {
+    return "resolved";
+  }
+
+  if (item.type === "found") {
+    return "found";
+  }
+
+  return "lost";
+}
+
 function handleApiRequest(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/items") {
     const database = readDatabase();
@@ -104,6 +116,7 @@ function handleApiRequest(req, res, url) {
         const item = {
           id: randomUUID(),
           type: payload.type,
+          status: normalizeItemStatus({ type: payload.type }),
           name: payload.name.trim(),
           location: payload.location.trim(),
           desc: payload.desc.trim(),
@@ -123,6 +136,20 @@ function handleApiRequest(req, res, url) {
 
         return sendJson(res, 500, { error: "Unable to save item." });
       });
+  }
+
+    if (req.method === "PATCH" && url.pathname.startsWith("/api/items/") && url.pathname.endsWith("/claim")) {
+    const [, , , itemId] = url.pathname.split("/");
+    const database = readDatabase();
+    const itemToUpdate = database.items.find((item) => item.id === itemId);
+
+    if (!itemToUpdate) {
+      return sendJson(res, 404, { error: "Item not found." });
+    }
+
+    itemToUpdate.status = "resolved";
+    writeDatabase(database);
+    return sendJson(res, 200, { item: itemToUpdate });
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/items/")) {
@@ -160,7 +187,8 @@ function serveStaticFile(res, filePath) {
 }
 
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  const host = req.headers.host || `localhost:${PORT}`;
+  const url = new URL(req.url, `http://${host}`);
 
   if (url.pathname.startsWith("/api/")) {
     handleApiRequest(req, res, url);
@@ -181,6 +209,14 @@ const server = http.createServer((req, res) => {
 
 ensureDatabase();
 
+const database = readDatabase();
+database.items = d
+database.items.map((item) => ({
+  ...item,
+  status: normalizeItemStatus(item)
+}));
+writeDatabase(database);
 server.listen(PORT, () => {
   console.log(`Lost & Found server running at http://localhost:${PORT}`);
+
 });
